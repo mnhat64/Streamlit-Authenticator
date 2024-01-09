@@ -113,8 +113,7 @@ class Authenticate:
             if self.token is not False:
                 if not st.session_state['logout']:
                     if self.token['exp_date'] > datetime.utcnow().timestamp():
-                        if 'name' and 'username' in self.token:
-                            st.session_state['name'] = self.token['name']
+                        if 'username' in self.token:
                             st.session_state['username'] = self.token['username']
                             st.session_state['authentication_status'] = True
     
@@ -136,7 +135,6 @@ class Authenticate:
             try:
                 if self._check_pw():
                     if inplace:
-                        st.session_state['name'] = self.credentials['usernames'][self.username]['name']
                         self.exp_date = self._set_exp_date()
                         self.token = self._token_encode()
                         self.cookie_manager.set(self.cookie_name, self.token,
