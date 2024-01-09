@@ -44,8 +44,6 @@ class Authenticate:
         self.cookie_manager = stx.CookieManager()
         self.validator = validator if validator is not None else Validator()
 
-        if 'name' not in st.session_state:
-            st.session_state['name'] = None
         if 'authentication_status' not in st.session_state:
             st.session_state['authentication_status'] = None
         if 'username' not in st.session_state:
@@ -62,7 +60,7 @@ class Authenticate:
         str
             The JWT cookie for passwordless reauthentication.
         """
-        return jwt.encode({'name':st.session_state['name'],
+        return jwt.encode({
             'username':st.session_state['username'],
             'exp_date':self.exp_date}, self.key, algorithm='HS256')
 
@@ -193,7 +191,7 @@ class Authenticate:
                 if login_form.form_submit_button('Login'):
                     self._check_credentials()
 
-        return st.session_state['name'], st.session_state['authentication_status'], st.session_state['username']
+        return st.session_state['authentication_status'], st.session_state['username']
 
     def logout(self, button_name: str, location: str='main', key: str=None):
         """
