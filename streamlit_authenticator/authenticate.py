@@ -284,7 +284,7 @@ class Authenticate:
             else:
                 raise CredentialsError('password')
     
-    def _register_credentials(self, username: str, name: str, password: str, email: str, preauthorization: bool):
+    def _register_credentials(self, username: str, password: str, preauthorization: bool):
         """
         Adds to credentials dictionary the new user's information.
 
@@ -292,27 +292,18 @@ class Authenticate:
         ----------
         username: str
             The username of the new user.
-        name: str
-            The name of the new user.
         password: str
             The password of the new user.
-        email: str
-            The email of the new user.
         preauthorization: bool
             The preauthorization requirement, True: user must be preauthorized to register, 
             False: any user can register.
         """
         if not self.validator.validate_username(username):
             raise RegisterError('Username is not valid')
-        if not self.validator.validate_name(name):
-            raise RegisterError('Name is not valid')
-        if not self.validator.validate_email(email):
-            raise RegisterError('Email is not valid')
 
-        self.credentials['usernames'][username] = {'name': name, 
-            'password': Hasher([password]).generate()[0], 'email': email}
+        self.credentials['usernames'][username] = {'password': Hasher([password]).generate()[0]}
         if preauthorization:
-            self.preauthorized['emails'].remove(email)
+            self.preauthorized.remove(username)
 
     def register_user(self, form_name: str, location: str='main', preauthorization=True) -> bool:
         """
@@ -343,24 +334,22 @@ class Authenticate:
             register_user_form = st.sidebar.form('Register user')
 
         register_user_form.subheader(form_name)
-        new_email = register_user_form.text_input('Email')
         new_username = register_user_form.text_input('Username').lower()
-        new_name = register_user_form.text_input('Name')
         new_password = register_user_form.text_input('Password', type='password')
         new_password_repeat = register_user_form.text_input('Repeat password', type='password')
 
         if register_user_form.form_submit_button('Register'):
-            if len(new_email) and len(new_username) and len(new_name) and len(new_password) > 0:
+            if len(new_username) and len(new_password) > 0:
                 if new_username not in self.credentials['usernames']:
                     if new_password == new_password_repeat:
                         if preauthorization:
-                            if new_email in self.preauthorized['emails']:
-                                self._register_credentials(new_username, new_name, new_password, new_email, preauthorization)
+                            if new_username in self.preauthorized:
+                                self._register_credentials(new_username, new_password, preauthorization)
                                 return True
                             else:
                                 raise RegisterError('User not preauthorized to register')
                         else:
-                            self._register_credentials(new_username, new_name, new_password, new_email, preauthorization)
+                            self._register_credentials(new_username, new_password, preauthorization)
                             return True
                     else:
                         raise RegisterError('Passwords do not match')
