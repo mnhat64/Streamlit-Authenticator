@@ -3,6 +3,7 @@ import bcrypt
 import streamlit as st
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
+import random 
 
 from .hasher import Hasher
 from .validator import Validator
@@ -210,14 +211,12 @@ class Authenticate:
             if st.button(button_name, key):
                 self.cookie_manager.delete(self.cookie_name)
                 st.session_state['logout'] = True
-                st.session_state['name'] = None
                 st.session_state['username'] = None
                 st.session_state['authentication_status'] = None
         elif location == 'sidebar':
             if st.sidebar.button(button_name, key):
                 self.cookie_manager.delete(self.cookie_name)
                 st.session_state['logout'] = True
-                st.session_state['name'] = None
                 st.session_state['username'] = None
                 st.session_state['authentication_status'] = None
 
@@ -333,6 +332,19 @@ class Authenticate:
         new_username = register_user_form.text_input('Username').lower()
         new_password = register_user_form.text_input('Password', type='password')
         new_password_repeat = register_user_form.text_input('Repeat password', type='password')
+
+        st.write( '### Sicheres Passwort erstellen' )
+
+        # create pass code button
+        create_pass_code_button = st.button( 'Erzeuge zufälliges Passwort' )
+
+        # create pass code button is pressed
+        if create_pass_code_button:
+            # create random pass code
+            random_password = generate_random_pw()
+            # pass code field to copy pass code
+            st.text_input( 'Erzeugtes Passwort', value = random_password, type = 'password' )
+            st.write( 'Das erzeugte Passwort kann per Copy & Paste oben eingefügt werden.')
 
         if register_user_form.form_submit_button('Register'):
             if len(new_username) and len(new_password) > 0:
@@ -523,3 +535,23 @@ class Authenticate:
                     raise UpdateError('New and current values are the same')
             if len(new_value) == 0:
                 raise UpdateError('New value not provided')
+
+    def _create_random_password(self):
+        passcode_length = 20
+        lowercase_letters = 'abcdefghijklmnopqrstuvxyzäöü'
+        uppercase_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ'
+        special_characters = ',;.:-_#\'!"§$%&/()=?*{[]}\\\+~<>|´`^°'
+        numbers = '0123456789'
+
+        all_chars = lowercase_letters + uppercase_letters + special_characters + numbers
+        passcode_characters = [
+            random.choice(lowercase_letters), 
+            random.choice(uppercase_letters),
+            random.choice(special_characters), 
+            random.choice(numbers)
+        ] + random.choices(all_chars, k=passcode_length-4)
+
+        random.shuffle(passcode_characters)
+
+        return ''.join(passcode_characters)
+
