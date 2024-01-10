@@ -211,7 +211,7 @@ class Authenticate:
                 left_column, right_column = st.columns( [ 5, 1 ] )
 
                 with left_column:
-                    st.write( 'Hallo ' + username )
+                    st.write(f'Hallo *{st.session_state["username"]}*')
 
                 with right_column:
                     submit_button = st.form_submit_button( 'Abmelden' )
