@@ -194,7 +194,7 @@ class Authenticate:
 
         return st.session_state['authentication_status'], st.session_state['username']
 
-    def logout(self, button_name: str, location: str='main', key: str=None):
+    def logout(self, username:str, button_name: str):
         """
         Creates a logout button.
 
@@ -205,20 +205,23 @@ class Authenticate:
         location: str
             The location of the logout button i.e. main or sidebar.
         """
-        if location not in ['main', 'sidebar']:
-            raise ValueError("Location must be one of 'main' or 'sidebar'")
-        if location == 'main':
-            if st.button(button_name, key):
-                self.cookie_manager.delete(self.cookie_name)
-                st.session_state['logout'] = True
-                st.session_state['username'] = None
-                st.session_state['authentication_status'] = None
-        elif location == 'sidebar':
-            if st.sidebar.button(button_name, key):
-                self.cookie_manager.delete(self.cookie_name)
-                st.session_state['logout'] = True
-                st.session_state['username'] = None
-                st.session_state['authentication_status'] = None
+
+        with st.form( 'logout_form' ):
+                # define two columns
+                left_column, right_column = st.columns( [ 5, 1 ] )
+
+                with left_column:
+                    st.write( 'Hallo ' + username )
+
+                with right_column:
+                    submit_button = st.form_submit_button( 'Abmelden' )
+
+                if submit_button == True:
+                    self.cookie_manager.delete(self.cookie_name)
+                    st.session_state['logout'] = True
+                    st.session_state['username'] = None
+                    st.session_state['authentication_status'] = None
+                
 
     def _update_password(self, username: str, password: str):
         """
