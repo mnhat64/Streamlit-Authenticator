@@ -21,7 +21,8 @@ if not _RELEASE:
         config['cookie']['name'], 
         config['cookie']['key'], 
         config['cookie']['expiry_days'],
-        config['preauthorized']
+        config['preauthorized'],
+        config['issuer']
     )
 
     # creating a login widget
