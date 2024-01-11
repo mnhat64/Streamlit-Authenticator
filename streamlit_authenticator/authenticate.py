@@ -367,9 +367,6 @@ class Authenticate:
                                 self._otp_key_register(new_username)
                             else:
                                 raise RegisterError('User not preauthorized to register')
-                        else:
-                            self._register_credentials(new_username, new_password, preauthorization)
-                            return True
                     else:
                         raise RegisterError('Passwords do not match')
                 else:
