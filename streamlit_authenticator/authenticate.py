@@ -364,6 +364,27 @@ class Authenticate:
                     if new_password == new_password_repeat:
                         if preauthorization:
                             if new_username in self.preauthorized:
+                                totp_secret = self._generate_qr_code
+                                self.credentials['usernames'][new_username] = {'otp_key': totp_secret}
+                                uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(new_username, issuer_name=self.issuer)
+                                qr_code_image = qrcode.make(uri)
+                                image = BytesIO()
+                                qr_code_image.save( image, format = 'png' )
+                                image.seek(0)
+                                with st.form( 'authentication_setup_form' ):
+                                        st.write( '\n\n' . join ( 
+                                            [ 'Für ihre Registrierung ist die Einrichtung eines zweiten Sicherheitsfaktor erforderlich.',
+                                                'Bitte installieren Sie eine Authentifizierungsapp (zum Beispiel: Google Authenticator oder Microsoft Authenticator) auf ihrem Mobilfunktelefon und scannen in dieser App den folgenden QR-Code:' ] ) )
+                                        st.image( image, width = 400 )
+                                        st.write( ' ' . join (
+                                            [ 'Wurde der QR-Code erfolgreich in der Authentifizierungsapp gescannt, steht nun alle 30 Sekunden ein neuer 6stelliger Code zur Verfügung.',
+                                                'Bitte geben Sie den aktuellen Code ein:' ] ) )
+                                        
+                                        # code input field
+                                        six_digit_code = st.text_input( '6stelliger Code' )
+
+                                        # submit button
+                                        submit_button = st.form_submit_button( 'Code abschicken')
                                 self._otp_key_register(new_username)
                             else:
                                 raise RegisterError('User not preauthorized to register')
