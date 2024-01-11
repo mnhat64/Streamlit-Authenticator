@@ -366,7 +366,6 @@ class Authenticate:
                             if new_username in self.preauthorized:
                                 self._register_credentials(new_username, new_password, preauthorization)
                                 self._otp_key_register(new_username)
-                                return True
                             else:
                                 raise RegisterError('User not preauthorized to register')
                         else:
@@ -609,7 +608,7 @@ class Authenticate:
         buffered = BytesIO()
         img.save(buffered, format="PNG")
         buffered.seek(0)
-        
+
         return buffered
 
 
