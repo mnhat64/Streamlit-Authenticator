@@ -595,7 +595,22 @@ class Authenticate:
         image = BytesIO()
         qr_code_image.save( image, format = 'png' )
         image.seek(0)
-        st.image( image, width = 400 )
+    
+        with st.form( 'authentication_setup_form' ):
+                st.write( '\n\n' . join ( 
+                    [ 'Für ihre Registrierung ist die Einrichtung eines zweiten Sicherheitsfaktor erforderlich.',
+                        'Bitte installieren Sie eine Authentifizierungsapp (zum Beispiel: Google Authenticator oder Microsoft Authenticator) auf ihrem Mobilfunktelefon und scannen in dieser App den folgenden QR-Code:' ] ) )
+                st.image( image, width = 400 )
+                st.write( ' ' . join (
+                    [ 'Wurde der QR-Code erfolgreich in der Authentifizierungsapp gescannt, steht nun alle 30 Sekunden ein neuer 6stelliger Code zur Verfügung.',
+                        'Bitte geben Sie den aktuellen Code ein:' ] ) )
+                
+                # code input field
+                six_digit_code = st.text_input( '6stelliger Code' )
+
+                # submit button
+                submit_button = st.form_submit_button( 'Code abschicken')
+
 
     def _verify_otp(user_input_otp, totp_secret):
         totp = pyotp.TOTP(totp_secret)
@@ -606,6 +621,7 @@ class Authenticate:
         self.credentials['usernames'][username] = {'otp_key': totp_secret}
         self._generate_qr_code(username, totp_secret)
 
+       
     def _otp_login(self, username, user_input):
         totp_secret = self.credentials['usernames'][username].get('totp_secret')
         if totp_secret and not self._verify_otp(user_input, totp_secret):
