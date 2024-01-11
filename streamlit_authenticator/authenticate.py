@@ -197,7 +197,7 @@ class Authenticate:
 
         return st.session_state['authentication_status'], st.session_state['username']
 
-    def logout(self, username:str, button_name: str):
+    def logout(self):
         """
         Creates a logout button.
 
