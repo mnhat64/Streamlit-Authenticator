@@ -6,6 +6,7 @@ import extra_streamlit_components as stx
 import random 
 import pyotp
 import qrcode
+from io import BytesIO
 from .hasher import Hasher
 from .validator import Validator
 from .utils import generate_random_pw
@@ -604,7 +605,12 @@ class Authenticate:
 
         img = qr.make_image(fill_color="black", back_color="white")
         img.save(f"{username}_qr.png")
-        return img
+
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        buffered.seek(0)
+        
+        return buffered
 
 
     def _verify_otp(user_input_otp, totp_secret):
@@ -612,7 +618,7 @@ class Authenticate:
         return totp.verify(user_input_otp)
     
     def _otp_key_register(self, username):
-        totp_secret = self._generate_totp_secret()
+        totp_secret = self.credentials['usernames'][username]['otp_key']
         self._generate_qr_code(username, totp_secret)
 
     def _otp_login(self, username, user_input):
