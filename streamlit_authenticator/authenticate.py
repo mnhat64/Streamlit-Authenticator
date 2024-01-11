@@ -364,7 +364,6 @@ class Authenticate:
                     if new_password == new_password_repeat:
                         if preauthorization:
                             if new_username in self.preauthorized:
-                                self._register_credentials(new_username, new_password, preauthorization)
                                 self._otp_key_register(new_username)
                             else:
                                 raise RegisterError('User not preauthorized to register')
@@ -598,13 +597,13 @@ class Authenticate:
         image.seek(0)
         st.image( image, width = 400 )
 
-
     def _verify_otp(user_input_otp, totp_secret):
         totp = pyotp.TOTP(totp_secret)
         return totp.verify(user_input_otp)
     
     def _otp_key_register(self, username):
-        totp_secret = self.credentials['usernames'][username]['otp_key']
+        totp_secret = self._generate_qr_code
+        self.credentials['usernames'][username] = {'otp_key': totp_secret}
         self._generate_qr_code(username, totp_secret)
 
     def _otp_login(self, username, user_input):
