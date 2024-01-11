@@ -4,6 +4,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 import random 
+import pyotp
 
 from .hasher import Hasher
 from .validator import Validator
@@ -44,6 +45,7 @@ class Authenticate:
         self.preauthorized = preauthorized
         self.cookie_manager = stx.CookieManager()
         self.validator = validator if validator is not None else Validator()
+        self.issuer_name 
 
         if 'authentication_status' not in st.session_state:
             st.session_state['authentication_status'] = None
@@ -557,4 +559,7 @@ class Authenticate:
         random.shuffle(passcode_characters)
 
         return ''.join(passcode_characters)
+    
+    def _generate_qr_code(user_name, totp_secret):
+        uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(user_name, issuer_name=)
 
