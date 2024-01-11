@@ -5,20 +5,20 @@ from datetime import datetime, timedelta
 import extra_streamlit_components as stx
 import random 
 import pyotp
-
+import qrcode
 from .hasher import Hasher
 from .validator import Validator
 from .utils import generate_random_pw
 
-from .exceptions import CredentialsError, ForgotError, RegisterError, ResetError, UpdateError
+from .exceptions import CredentialsError, ForgotError, RegisterError, ResetError, UpdateError, TOTPError
 
 class Authenticate:
     """
     This class will create login, logout, register user, reset password, forgot password, 
     forgot username, and modify user details widgets.
     """
-    def __init__(self, credentials: dict, cookie_name: str, key: str, cookie_expiry_days: float=30.0, 
-        preauthorized: list=None, validator: Validator=None):
+    def __init__(self, credentials: dict, cookie_name: str, key: str, cookie_expiry_days: float, 
+                 preauthorized: list, issuer: str, validator: Validator = None):
         """
         Create a new instance of "Authenticate".
 
@@ -43,9 +43,10 @@ class Authenticate:
         self.key = key
         self.cookie_expiry_days = cookie_expiry_days
         self.preauthorized = preauthorized
+        self.issuer = issuer
         self.cookie_manager = stx.CookieManager()
         self.validator = validator if validator is not None else Validator()
-        self.issuer_name 
+        
 
         if 'authentication_status' not in st.session_state:
             st.session_state['authentication_status'] = None
@@ -300,8 +301,13 @@ class Authenticate:
         """
         if not self.validator.validate_username(username):
             raise RegisterError('Username is not valid')
+        
+        totp_secret = pyotp.random_base32()
 
-        self.credentials['usernames'][username] = {'password': Hasher([password]).generate()[0]}
+        self.credentials['usernames'][username] = {
+            'password': Hasher([password]).generate()[0],
+            'otp_key': totp_secret}
+        
         if preauthorization:
             self.preauthorized.remove(username)
 
@@ -358,6 +364,7 @@ class Authenticate:
                         if preauthorization:
                             if new_username in self.preauthorized:
                                 self._register_credentials(new_username, new_password, preauthorization)
+                                self._otp_key_register(new_username)
                                 return True
                             else:
                                 raise RegisterError('User not preauthorized to register')
@@ -560,6 +567,56 @@ class Authenticate:
 
         return ''.join(passcode_characters)
     
-    def _generate_qr_code(user_name, totp_secret):
-        uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(user_name, issuer_name=)
+    def two_factor_authen(image):
+         with st.form( 'authentication_setup_form' ):
+                    st.write( '\n\n' . join ( 
+                        [ 'Für ihre Registrierung ist die Einrichtung eines zweiten Sicherheitsfaktor erforderlich.',
+                          'Bitte installieren Sie eine Authentifizierungsapp (zum Beispiel: Google Authenticator oder Microsoft Authenticator) auf ihrem Mobilfunktelefon und scannen in dieser App den folgenden QR-Code:' ] ) )
+                    st.image( image, width = 400 )
+                    st.write( ' ' . join (
+                        [ 'Wurde der QR-Code erfolgreich in der Authentifizierungsapp gescannt, steht nun alle 30 Sekunden ein neuer 6stelliger Code zur Verfügung.',
+                          'Bitte geben Sie den aktuellen Code ein:' ] ) )
+                    
+                    # code input field
+                    six_digit_code = st.text_input( '6stelliger Code' )
 
+                    # submit button
+                    submit_button = st.form_submit_button( 'Code abschicken')
+
+
+    
+    def _generate_totp_secret(self):
+        return pyotp.random_base32()
+    
+    def _generate_qr_code(self,username,totp_secret):
+    # Generate a URI for the QR code
+        uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(username, issuer_name=self.issuer)
+
+    # Generate and save the QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(uri)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+        img.save(f"{username}_qr.png")
+        return img
+
+
+    def _verify_otp(user_input_otp, totp_secret):
+        totp = pyotp.TOTP(totp_secret)
+        return totp.verify(user_input_otp)
+    
+    def _otp_key_register(self, username):
+        totp_secret = self._generate_totp_secret()
+        self._generate_qr_code(username, totp_secret)
+
+    def _otp_login(self, username, user_input):
+        totp_secret = self.credentials['usernames'][username].get('totp_secret')
+        if totp_secret and not self._verify_otp(user_input, totp_secret):
+            raise TOTPError("Invalid OTP")
+   

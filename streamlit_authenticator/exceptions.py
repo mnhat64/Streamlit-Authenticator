@@ -61,3 +61,16 @@ class UpdateError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
+
+class TOTPError(Exception):
+    """
+    Exceptions raised for the update user details widget.
+
+    Attributes
+    ----------
+    message: str
+        The custom error message to display.
+    """
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
