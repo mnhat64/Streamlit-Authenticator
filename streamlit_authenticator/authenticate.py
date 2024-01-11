@@ -592,24 +592,11 @@ class Authenticate:
     # Generate a URI for the QR code
         uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(username, issuer_name=self.issuer)
 
-    # Generate and save the QR code
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(uri)
-        qr.make(fit=True)
-
-        img = qr.make_image(fill_color="black", back_color="white")
-        img.save(f"{username}_qr.png")
-
-        buffered = BytesIO()
-        img.save(buffered, format="PNG")
-        buffered.seek(0)
-
-        return buffered
+        qr_code_image = qrcode.make(uri)
+        image = BytesIO()
+        qr_code_image.save( image, format = 'png' )
+        image.seek(0)
+        st.image( image, width = 400 )
 
 
     def _verify_otp(user_input_otp, totp_secret):
