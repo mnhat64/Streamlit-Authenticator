@@ -350,10 +350,11 @@ class Authenticate:
         qr_code_image = qrcode.make(uri)
         image = BytesIO()
         qr_code_image.save(image, format='png')
-        image.seek(0)
+        image_bytes = image.getvalue()
+        #image.seek(0)
 
         with st.form('authentication_setup_form'):
-            st.image(image, width=400)
+            st.image(image_bytes, width=400)
             st.write('Scan the QR code with your authentication app.')
 
     
