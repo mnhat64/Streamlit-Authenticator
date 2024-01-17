@@ -341,7 +341,7 @@ class Authenticate:
                 raise RegisterError('User not preauthorized to register')
             
           
-        totp_secret = self._generate_qr_code()
+        totp_secret = self._generate_totp_secret
         return self.otp.verification(new_username, totp_secret)
            
     
