@@ -312,11 +312,7 @@ class Authenticate:
         if preauthorization:
             self.preauthorized.remove(username)
 
-    def register_user(self, form_name: str, location: str='main', preauthorization=True) -> bool:
-        if preauthorization:
-            if not self.preauthorized:
-                raise ValueError("preauthorization argument must not be None")
-       
+    def register_user(self, form_name: str) -> bool:
         register_user_form = st.form('Register user')
         
         register_user_form.subheader(form_name)
