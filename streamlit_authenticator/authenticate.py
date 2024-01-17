@@ -342,7 +342,7 @@ class Authenticate:
             
           
         totp_secret = self._generate_totp_secret
-        return self.otp.verification(new_username, totp_secret)
+        return self.otp_verification(new_username, totp_secret)
            
     
     def otp_verification(self, new_username, totp_secret):
