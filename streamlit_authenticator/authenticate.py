@@ -313,6 +313,72 @@ class Authenticate:
             self.preauthorized.remove(username)
 
     def register_user(self, form_name: str, location: str='main', preauthorization=True) -> bool:
+        if preauthorization:
+            if not self.preauthorized:
+                raise ValueError("preauthorization argument must not be None")
+       
+        register_user_form = st.form('Register user')
+        
+        register_user_form.subheader(form_name)
+        new_username = register_user_form.text_input('Username').lower()
+        new_password = register_user_form.text_input('Password', type='password')
+        new_password_repeat = register_user_form.text_input('Repeat password', type='password')
+
+        st.write( '### Sicheres Passwort erstellen' )
+
+        # create pass code button
+        create_pass_code_button = st.button( 'Erzeuge zufälliges Passwort' )
+
+        if create_pass_code_button:
+            random_password = generate_random_pw()
+            st.text_input( 'Erzeugtes Passwort', value = random_password, type = 'password' )
+            st.write( 'Das erzeugte Passwort kann per Copy & Paste oben eingefügt werden.')
+
+        if register_user_form.form_submit_button('Register'):
+            if len(new_username) == 0 or len(new_password) == 0:
+                raise RegisterError('Please enter a username and password')
+            if new_username in self.credentials['usernames']:
+                raise RegisterError('Username already taken')
+            if new_password != new_password_repeat:
+                raise RegisterError('Passwords do not match')
+            if new_username not in self.preauthorized:
+                raise RegisterError('User not preauthorized to register')
+            
+          
+        totp_secret = self._generate_qr_code()
+        return self.otp.verification(new_username, totp_secret)
+           
+    
+    def otp_verification(self, new_username, totp_secret):
+        uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(new_username, issuer_name=self.issuer)
+        qr_code_image = qrcode.make(uri)
+        image = BytesIO()
+        qr_code_image.save(image, format='png')
+        image.seek(0)
+
+        with st.form('authentication_setup_form'):
+            st.image(image, width=400)
+            st.write('Scan the QR code with your authentication app.')
+
+    
+            six_digit_code = st.text_input('6-digit Code')
+            submit_button = st.form_submit_button('Submit Code')
+
+            if submit_button:
+            # Verify the OTP entered by the user
+                if pyotp.TOTP(totp_secret).verify(six_digit_code):
+                    # Save credentials if OTP is correct
+                    self.credentials['usernames'][new_username] = {'otp_key': totp_secret}
+                    self._otp_key_register(new_username)
+                    return True
+                else:
+                    # Allow the user to enter the code again if it's incorrect
+                    st.error('Incorrect code. Please try again.')
+                    return False
+
+            
+    '''
+    def register_user(self, form_name: str, location: str='main', preauthorization=True) -> bool:
         """
         Creates a register new user widget.
 
@@ -350,13 +416,12 @@ class Authenticate:
         # create pass code button
         create_pass_code_button = st.button( 'Erzeuge zufälliges Passwort' )
 
-        # create pass code button is pressed
         if create_pass_code_button:
-            # create random pass code
             random_password = generate_random_pw()
-            # pass code field to copy pass code
             st.text_input( 'Erzeugtes Passwort', value = random_password, type = 'password' )
             st.write( 'Das erzeugte Passwort kann per Copy & Paste oben eingefügt werden.')
+
+          
 
         if register_user_form.form_submit_button('Register'):
             if len(new_username) and len(new_password) > 0:
@@ -394,6 +459,7 @@ class Authenticate:
                     raise RegisterError('Username already taken')
             else:
                 raise RegisterError('Please enter an email, username, name, and password')
+    '''
 
     def _set_random_password(self, username: str) -> str:
         """
